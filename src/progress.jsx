@@ -55,6 +55,7 @@ export const ids = {
     ...motorq.priorities.map((_, i) => `co:pri:${i}`),
   ],
   sites: interviewDayChecklist.map((c) => `site:${c.id}`),
+  scroll: patterns.map((p) => `scroll:${p.id}`),
 };
 
 export function pct(list, done) {

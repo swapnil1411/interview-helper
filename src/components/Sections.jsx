@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useProgress, ids, pct } from '../progress';
-import { ExtLink, Check, Bar, Star, Callout, LinkGrid } from './ui';
+import { useProgress, ids, pct, safeSet } from '../progress';
+import { ExtLink, Check, Bar, Star, Callout, LinkGrid, Icon, Ring } from './ui';
 import { patterns, retainRules, masteryLadder, dsaLinks, lcUrl, questionId, allQuestions } from '../data/dsa';
 import { primaryGuide, roadmap, concepts, framework, problems, reminderChips, resources, ytSearch } from '../data/systemDesign';
 import {
@@ -9,37 +9,123 @@ import {
 import { siteGroups, interviewDayChecklist } from '../data/sites';
 
 /* ---------------- Home ---------------- */
-export function Home({ go }) {
+const DAY = 86400000;
+const dayKey = (t) => new Date(t).toDateString();
+function streakOf(done) {
+  const days = new Set(Object.values(done).filter((v) => typeof v === 'number').map(dayKey));
+  let n = 0, t = Date.now();
+  if (!days.has(dayKey(t))) t -= DAY; // nothing yet today: the streak is still alive from yesterday
+  while (days.has(dayKey(t))) { n += 1; t -= DAY; }
+  return n;
+}
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 5 ? 'Late-night prep' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+};
+const short = (name) => name.replace(/\s*\(.*\)/, '');
+
+export function Home({ go, install }) {
   const { done, reset } = useProgress();
-  const all = [...ids.dsa, ...ids.sd, ...ids.company, ...ids.sites];
-  const cards = [
-    { tab: 'dsa', name: 'DSA Patterns', v: pct(ids.dsa, done), sub: `Core set ${pct(ids.dsaCore, done)}% · ${ids.dsa.filter((i) => done[i]).length}/${ids.dsa.length} problems` },
-    { tab: 'sd', name: 'System Design', v: pct(ids.sd, done), sub: `${ids.sd.filter((i) => done[i]).length}/${ids.sd.length} concepts & problems` },
-    { tab: 'company', name: 'Company Intel', v: pct(ids.company, done), sub: 'Motorq JD match + priorities' },
-    { tab: 'sites', name: 'Interview Sites', v: pct(ids.sites, done), sub: 'Interview-day checklist' },
+  const all = [...ids.dsa, ...ids.sd, ...ids.company, ...ids.sites, ...ids.scroll];
+  const count = (list) => list.filter((i) => done[i]).length;
+  const week = Object.values(done).filter((t) => typeof t === 'number' && Date.now() - t < 7 * DAY).length;
+  const nextLearn = patterns.find((p) => !done[`scroll:${p.id}`]);
+  const nextQ = patterns.map((p) => [p, p.questions.find((q) => !done[questionId(p.id, q[1])])]).find(([, q]) => q);
+  const sdItems = [
+    ...concepts.flatMap((t) => t.items.map((c) => ({ id: `sd:c:${c.id}`, name: c.name }))),
+    ...problems.map((p) => ({ id: `sd:p:${p.id}`, name: p.name })),
   ];
+  const nextSD = sdItems.find((c) => !done[c.id]);
+  const tracks = [
+    { tab: 'learn', icon: 'play', name: 'Learn Scroll', list: ids.scroll, sub: 'patterns learned' },
+    { tab: 'dsa', icon: 'braces', name: 'DSA Patterns', list: ids.dsa, sub: `problems · core set ${pct(ids.dsaCore, done)}%` },
+    { tab: 'sd', icon: 'network', name: 'System Design', list: ids.sd, sub: 'concepts & problems' },
+    { tab: 'company', icon: 'briefcase', name: 'Company Intel', list: ids.company, sub: 'Motorq JD match & priorities' },
+    { tab: 'sites', icon: 'compass', name: 'Interview Sites', list: ids.sites, sub: 'interview-day checklist' },
+  ];
+  const overall = pct(all, done);
+
   return (
     <>
-      <header className="page-head">
-        <h1>Interview Prep Hub</h1>
-        <p className="muted">SDE · ~2.5 yrs · Java · Kafka · Go · Python · Databricks — target: <b>Motorq</b> + remote product companies in India.</p>
-      </header>
-      <div className="overall">
-        <div className="ring" style={{ '--p': pct(all, done) }}><span>{pct(all, done)}%</span></div>
-        <div>
-          <h2>Overall progress</h2>
-          <p className="muted">{all.filter((i) => done[i]).length} of {all.length} items done. Every checkbox is saved in this browser.</p>
+      <section className="home-hero">
+        <div className="home-hero-text">
+          <p className="eyebrow">Motorq · remote product companies in India</p>
+          <h1>{greeting()}.<span className="h-sub">One pattern a day compounds.</span></h1>
+          <p className="lede">SDE · ~2.5 yrs · Java, Kafka, Go, Python, Databricks. Every checkbox is saved on this device.</p>
+          <div className="stat-row">
+            <div className="stat stat-hot"><Icon name="flame" size={18} /><b>{streakOf(done)}</b><span>day streak</span></div>
+            <div className="stat"><b>{week}</b><span>done this week</span></div>
+            <div className="stat"><b>{count(ids.dsa)}</b><span>of {ids.dsa.length} problems</span></div>
+          </div>
         </div>
+        <Ring value={overall} size={148} stroke={12}><b>{overall}%</b><small>{count(all)} / {all.length}</small></Ring>
+      </section>
+
+      <h2 className="section-title">Up next</h2>
+      <div className="next-grid">
+        {nextLearn && (
+          <article className="next-card next-learn">
+            <span className="next-kind"><Icon name="play" size={15} /> Learn · ~15 min</span>
+            <h3>{short(nextLearn.name)}</h3>
+            <p className="muted small">Step through the diagram, watch one video, read one explainer, then solve.</p>
+            <button className="btn btn-signal" onClick={() => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); }}>
+              Start learning <Icon name="arrow" size={16} />
+            </button>
+          </article>
+        )}
+        {nextQ && (
+          <article className="next-card">
+            <span className="next-kind"><Icon name="braces" size={15} /> Solve · {short(nextQ[0].name)}</span>
+            <h3>{nextQ[1][0]}</h3>
+            <p className="muted small">Your next unsolved core problem. Say the pattern out loud before you write code.</p>
+            <div className="btn-row">
+              <a className="btn" href={lcUrl(nextQ[1][1])} target="_blank" rel="noopener noreferrer">Solve on LeetCode <Icon name="arrow" size={16} /></a>
+              <Check id={questionId(nextQ[0].id, nextQ[1][1])}>Solved</Check>
+            </div>
+          </article>
+        )}
+        {nextSD && (
+          <article className="next-card">
+            <span className="next-kind"><Icon name="network" size={15} /> Design · out loud</span>
+            <h3>{nextSD.name}</h3>
+            <p className="muted small">Explain it in two minutes as if the interviewer just asked, then tick it off.</p>
+            <div className="btn-row">
+              <button className="btn btn-ghost" onClick={() => go('sd')}>Open System Design <Icon name="arrow" size={16} /></button>
+              <Check id={nextSD.id}>Done</Check>
+            </div>
+          </article>
+        )}
+        {!nextLearn && !nextQ && !nextSD && (
+          <article className="next-card"><h3>Everything is checked.</h3><p className="muted">Now redo the Motorq set against a 35-minute timer, out loud.</p></article>
+        )}
       </div>
-      <div className="cards">
-        {cards.map((c) => (
-          <button key={c.tab} className="card card-btn" onClick={() => go(c.tab)}>
-            <h3>{c.name}</h3>
-            <Bar value={c.v} />
-            <small className="muted">{c.sub}</small>
+
+      <h2 className="section-title">Your tracks</h2>
+      <div className="track-grid">
+        {tracks.map((t) => (
+          <button key={t.tab} className="track" onClick={() => go(t.tab)}>
+            <span className="track-top">
+              <span className="track-icon"><Icon name={t.icon} /></span>
+              <span className="track-pct">{pct(t.list, done)}%</span>
+            </span>
+            <span className="track-name">{t.name}</span>
+            <span className="track-meta">{count(t.list)}/{t.list.length} {t.sub}</span>
+            <span className="bar"><span className="bar-fill" style={{ width: `${pct(t.list, done)}%` }} /></span>
           </button>
         ))}
       </div>
+
+      {!install.installed && (
+        <Callout title="Use it like an app on your phone">
+          <p>
+            {install.canInstall
+              ? 'Chrome can install PrepHub: it gets its own home-screen icon, opens full-screen and works offline.'
+              : 'In Chrome on Android, open this site over HTTPS, then tap ⋮ → Install app. It opens full-screen and works offline.'}
+          </p>
+          {install.canInstall && <button className="btn btn-signal" onClick={install.install}><Icon name="download" size={16} /> Install app</button>}
+        </Callout>
+      )}
+
       <Callout title="This week's Motorq focus" tone="star">
         <ol>{motorq.priorities.slice(0, 5).map((p) => <li key={p}>{p}</li>)}</ol>
       </Callout>
@@ -337,9 +423,9 @@ export function Company() {
         <tbody>
           {openings.map((o) => (
             <tr key={o.url + o.role}>
-              <td><ExtLink href={o.url}>{o.role}</ExtLink><br /><small className="muted">seen {o.seen}</small></td>
-              <td>{o.company}</td><td>{o.exp}</td><td>{o.pay}</td><td>{o.model}</td>
-              <td><span className={`tag ${o.fit === 'match' ? 'tier-1' : 'tag-star'}`}>{o.fit === 'match' ? 'Matches 2.5 yrs' : 'Stretch'}</span></td>
+              <td data-label="Role"><ExtLink href={o.url}>{o.role}</ExtLink><br /><small className="muted">seen {o.seen}</small></td>
+              <td data-label="Company">{o.company}</td><td data-label="Experience">{o.exp}</td><td data-label="Pay">{o.pay}</td><td data-label="Location">{o.model}</td>
+              <td data-label="Fit"><span className={`tag ${o.fit === 'match' ? 'tier-1' : 'tag-star'}`}>{o.fit === 'match' ? 'Matches 2.5 yrs' : 'Stretch'}</span></td>
             </tr>
           ))}
         </tbody>
@@ -355,9 +441,9 @@ export function Company() {
         <tbody>
           {hiringNow.map((c) => (
             <tr key={c.name}>
-              <td><ExtLink href={c.url}>{c.name}</ExtLink></td>
-              <td>{c.workModel}</td>
-              <td>{c.fit}</td>
+              <td data-label="Company"><ExtLink href={c.url}>{c.name}</ExtLink></td>
+              <td data-label="Work model">{c.workModel}</td>
+              <td data-label="Why it fits">{c.fit}</td>
             </tr>
           ))}
         </tbody>
