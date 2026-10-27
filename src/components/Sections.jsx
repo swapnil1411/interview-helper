@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useProgress, ids, pct } from '../progress';
 import { ExtLink, Check, Bar, Star, Callout, LinkGrid } from './ui';
 import { patterns, retainRules, masteryLadder, dsaLinks, lcUrl, questionId, allQuestions } from '../data/dsa';
-import { primaryGuide, roadmap, concepts, framework, problems, reminderChips, resources } from '../data/systemDesign';
+import { primaryGuide, roadmap, concepts, framework, problems, reminderChips, resources, ytSearch } from '../data/systemDesign';
 import {
-  motorq, remoteIndiaGeneral, linkedinSearches, hiringNow, hiringSnapshotDate, remoteJobBoards,
+  motorq, remoteIndiaGeneral, linkedinSearches, hiringNow, hiringSnapshotDate, remoteJobBoards, openings, atsSearches,
 } from '../data/companies';
 import { siteGroups, interviewDayChecklist } from '../data/sites';
 
@@ -51,6 +51,18 @@ export function Home({ go }) {
 }
 
 /* ---------------- DSA ---------------- */
+function QRow({ pid, t, slug, note, star }) {
+  return (
+    <li className="qrow">
+      <Check id={questionId(pid, slug)}>
+        <ExtLink href={lcUrl(slug)}>{t}</ExtLink>
+        {note && <span className={`tag sm ${star ? 'tag-star' : ''}`}>{note}</span>}
+      </Check>
+      <a className="solve" href={lcUrl(slug)} target="_blank" rel="noopener noreferrer">Solve on LeetCode →</a>
+    </li>
+  );
+}
+
 function PatternCard({ p, index, open, onToggle }) {
   const { done } = useProgress();
   const list = allQuestions(p);
@@ -79,27 +91,13 @@ function PatternCard({ p, index, open, onToggle }) {
           </div>
           <h4>Core 7 <small className="muted">· {pct(corePid, done)}% — solve + re-solve these first</small></h4>
           <ul className="qlist">
-            {p.questions.map(([t, slug, note]) => (
-              <li key={'c' + slug}>
-                <Check id={questionId(p.id, slug)}>
-                  <ExtLink href={lcUrl(slug)}>{t}</ExtLink>
-                  {note && <span className="tag tag-star sm">{note}</span>}
-                </Check>
-              </li>
-            ))}
+            {p.questions.map(([t, slug, note]) => <QRow key={'c' + slug} pid={p.id} t={t} slug={slug} note={note} star />)}
           </ul>
           {p.extra.length > 0 && (
             <>
               <h4>Mastery set <small className="muted">· do after the core 7 to make it reflex</small></h4>
               <ul className="qlist">
-                {p.extra.map(([t, slug, note]) => (
-                  <li key={'e' + slug}>
-                    <Check id={questionId(p.id, slug)}>
-                      <ExtLink href={lcUrl(slug)}>{t}</ExtLink>
-                      {note && <span className="tag sm">{note}</span>}
-                    </Check>
-                  </li>
-                ))}
+                {p.extra.map(([t, slug, note]) => <QRow key={'e' + slug} pid={p.id} t={t} slug={slug} note={note} />)}
               </ul>
             </>
           )}
@@ -153,6 +151,10 @@ function Concept({ c }) {
           <p>{c.what}</p>
           <ul>{c.points.map((pt) => <li key={pt}>{pt}</li>)}</ul>
           <p className="say"><b>Say it:</b> {c.interviewLine}</p>
+          <div className="btn-row">
+            {c.read && <ExtLink href={c.read} className="chip chip-link">Read</ExtLink>}
+            <ExtLink href={ytSearch(`${c.name.replace(/\(.*\)/, '')} system design`)} className="chip chip-link">▶ Watch on YouTube</ExtLink>
+          </div>
         </div>
       )}
     </li>
@@ -172,7 +174,10 @@ function Problem({ p, n }) {
         <div className="concept-body">
           <p className="muted small">Attempt cold first, then compare with this outline.</p>
           <ul>{p.outline.map((o) => <li key={o}>{o}</li>)}</ul>
-          {p.link && <ExtLink href={p.link}>Full walkthrough</ExtLink>}
+          <div className="btn-row">
+            {p.link && <ExtLink href={p.link} className="chip chip-link">Full walkthrough</ExtLink>}
+            <ExtLink href={ytSearch(`system design ${p.name.split(' — ')[0]}`)} className="chip chip-link">▶ YouTube walkthroughs</ExtLink>
+          </div>
         </div>
       )}
     </li>
@@ -263,11 +268,32 @@ export function Company() {
         </div>
         <p>{motorq.what}</p>
 
+        <h3>What Motorq actually asks — round by round</h3>
+        <div className="asked-grid">
+          {motorq.rounds.map((r, i) => (
+            <div key={r.round} className="asked">
+              <div className="asked-head"><span className="asked-num">{i + 1}</span>{r.round}</div>
+              <ul>
+                {r.asked.map((a) => (
+                  <li key={a.q}>
+                    <span className="asked-q">{a.q}</span>
+                    {a.practice.length > 0 && (
+                      <span className="asked-practice">
+                        Practice: {a.practice.map(([t, slug]) => <ExtLink key={slug} href={lcUrl(slug)}>{t}</ExtLink>)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
         <h3>Interview loop</h3>
         <ol className="loop">{motorq.loop.map((s) => <li key={s}>{s}</li>)}</ol>
         <ul>{motorq.loopNotes.map((s) => <li key={s}>{s}</li>)}</ul>
 
-        <h3>Confirmed question types</h3>
+        <h3>Confirmed question types (summary)</h3>
         <table className="table"><tbody>
           {motorq.questionTypes.map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}
         </tbody></table>
@@ -294,7 +320,10 @@ export function Company() {
         <LinkGrid items={motorq.sources} />
       </section>
 
-      <h2>Remote companies hiring in India now</h2>
+      <h2>Remote product companies in India — interview pattern</h2>
+      <p>{remoteIndiaGeneral.summary}</p>
+      <LinkGrid items={remoteIndiaGeneral.research} />
+      <h2>Remote jobs in India — hiring now</h2>
       <p className="muted">
         Snapshot {hiringSnapshotDate}. LinkedIn needs a login to browse, so the always-current view is the live searches below
         (filters: Remote · India · posted in the past week). Check each role's location before applying.
@@ -302,6 +331,25 @@ export function Company() {
       <div className="chips">
         {linkedinSearches.map((s) => <ExtLink key={s.url} href={s.url} className="chip chip-link">{s.name}</ExtLink>)}
       </div>
+      <h3>Current openings found ({hiringSnapshotDate})</h3>
+      <table className="table hiring">
+        <thead><tr><th>Role</th><th>Company</th><th>Experience</th><th>Pay</th><th>Location</th><th>Fit</th></tr></thead>
+        <tbody>
+          {openings.map((o) => (
+            <tr key={o.url + o.role}>
+              <td><ExtLink href={o.url}>{o.role}</ExtLink><br /><small className="muted">seen {o.seen}</small></td>
+              <td>{o.company}</td><td>{o.exp}</td><td>{o.pay}</td><td>{o.model}</td>
+              <td><span className={`tag ${o.fit === 'match' ? 'tier-1' : 'tag-star'}`}>{o.fit === 'match' ? 'Matches 2.5 yrs' : 'Stretch'}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted small">Openings close fast — confirm on the employer's own site. To find roles before they reach LinkedIn, search the ATS boards directly:</p>
+      <div className="chips">
+        {atsSearches.map((s) => <ExtLink key={s.url} href={s.url} className="chip chip-link">{s.name}</ExtLink>)}
+      </div>
+
+      <h3>Remote-friendly companies to watch</h3>
       <table className="table hiring">
         <thead><tr><th>Company</th><th>Work model</th><th>Why it fits you</th></tr></thead>
         <tbody>
@@ -317,9 +365,6 @@ export function Company() {
       <h3>Remote job boards</h3>
       <LinkGrid items={remoteJobBoards} />
 
-      <h2>Remote product companies in India — interview pattern</h2>
-      <p>{remoteIndiaGeneral.summary}</p>
-      <LinkGrid items={remoteIndiaGeneral.research} />
     </>
   );
 }

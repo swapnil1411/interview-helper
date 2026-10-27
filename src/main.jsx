@@ -19,8 +19,8 @@ const fromHash = () => {
 
 function App() {
   const [tab, setTab] = useState(fromHash);
-  const [theme, setTheme] = useState(() =>
-    safeGet('interview-prep-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const [theme, setTheme] = useState(() => safeGet('interview-prep-theme', 'light'));
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   useEffect(() => {
     const onHash = () => setTab(fromHash());
@@ -28,9 +28,15 @@ function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e) => setSystemDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
     safeSet('interview-prep-theme', theme);
-  }, [theme]);
+  }, [theme, systemDark]);
 
   const go = (id) => { window.location.hash = id; window.scrollTo(0, 0); };
   const Active = TABS.find((t) => t.id === tab).C;
@@ -44,11 +50,15 @@ function App() {
             <span className="nav-icon">{t.icon}</span><span className="nav-label">{t.label}</span>
           </button>
         ))}
-        <button className="nav theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          <span className="nav-icon">{theme === 'dark' ? '☀' : '☾'}</span><span className="nav-label">{theme === 'dark' ? 'Light' : 'Dark'} mode</span>
-        </button>
       </nav>
-      <main className="content"><Active go={go} /></main>
+      <main className="content">
+        <div className="theme-switch" role="radiogroup" aria-label="Theme">
+          {[['light', '☀ Light'], ['dark', '☾ Dark'], ['system', '◐ System']].map(([v, l]) => (
+            <button key={v} role="radio" aria-checked={theme === v} className={theme === v ? 'on' : ''} onClick={() => setTheme(v)}>{l}</button>
+          ))}
+        </div>
+        <Active go={go} />
+      </main>
     </div>
   );
 }
