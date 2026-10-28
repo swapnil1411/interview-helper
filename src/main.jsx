@@ -73,7 +73,7 @@ function App() {
   useEffect(() => {
     const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
     document.documentElement.dataset.theme = resolved;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0b0c0f' : '#ffffff');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#111214' : '#f5f5f2');
     safeSet('interview-prep-theme', theme);
   }, [theme, systemDark]);
 
