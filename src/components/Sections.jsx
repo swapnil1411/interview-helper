@@ -37,21 +37,28 @@ export function Home({ go, install }) {
   ];
   const nextSD = sdItems.find((c) => !done[c.id]);
   const tracks = [
-    { tab: 'learn', icon: 'play', name: 'Learn Scroll', list: ids.scroll, sub: 'patterns learned' },
-    { tab: 'dsa', icon: 'braces', name: 'DSA Patterns', list: ids.dsa, sub: `problems · core set ${pct(ids.dsaCore, done)}%` },
+    { tab: 'learn', icon: 'play', name: 'Learn', list: ids.scroll, sub: 'patterns understood' },
+    { tab: 'dsa', icon: 'braces', name: 'Practice', list: ids.dsa, sub: `coding problems · core ${pct(ids.dsaCore, done)}%` },
     { tab: 'sd', icon: 'network', name: 'System Design', list: ids.sd, sub: 'concepts & problems' },
-    { tab: 'company', icon: 'briefcase', name: 'Company Intel', list: ids.company, sub: 'Motorq JD match & priorities' },
-    { tab: 'sites', icon: 'compass', name: 'Interview Sites', list: ids.sites, sub: 'interview-day checklist' },
+    { tab: 'company', icon: 'briefcase', name: 'Companies', list: ids.company, sub: 'targets & interview notes' },
+    { tab: 'sites', icon: 'compass', name: 'Resources', list: ids.sites, sub: 'tools & interview checklist' },
   ];
   const overall = pct(all, done);
+  const primary = nextLearn
+    ? { kind: 'Learn next', icon: 'play', title: short(nextLearn.name), copy: 'Understand the pattern with a visual walkthrough, then try it yourself.', label: 'Continue learning', action: () => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); } }
+    : nextQ
+      ? { kind: 'Practice next', icon: 'braces', title: nextQ[1][0], copy: 'Your next unsolved core problem. Name the pattern before you start coding.', label: 'Start problem', href: lcUrl(nextQ[1][1]) }
+      : nextSD
+        ? { kind: 'Design next', icon: 'network', title: nextSD.name, copy: 'Explain it out loud in two minutes, as if the interviewer just asked.', label: 'Open System Design', action: () => go('sd') }
+        : null;
 
   return (
     <>
       <section className="home-hero">
         <div className="home-hero-text">
-          <p className="eyebrow">Motorq · remote product companies in India</p>
-          <h1>{greeting()}.<span className="h-sub">One pattern a day compounds.</span></h1>
-          <p className="lede">SDE · ~2.5 yrs · Java, Kafka, Go, Python, Databricks. Every checkbox is saved on this device.</p>
+          <p className="eyebrow">Your interview plan</p>
+          <h1>{greeting()}.</h1>
+          <p className="lede">Keep it simple: finish one focused session today.</p>
           <div className="stat-row">
             <div className="stat stat-hot"><Icon name="flame" size={18} /><b>{streakOf(done)}</b><span>day streak</span></div>
             <div className="stat"><b>{week}</b><span>done this week</span></div>
@@ -61,44 +68,30 @@ export function Home({ go, install }) {
         <Ring value={overall} size={148} stroke={12}><b>{overall}%</b><small>{count(all)} / {all.length}</small></Ring>
       </section>
 
-      <h2 className="section-title">Up next</h2>
-      <div className="next-grid">
-        {nextLearn && (
-          <article className="next-card next-learn">
-            <span className="next-kind"><Icon name="play" size={15} /> Learn · ~15 min</span>
-            <h3>{short(nextLearn.name)}</h3>
-            <p className="muted small">Step through the diagram, watch one video, read one explainer, then solve.</p>
-            <button className="btn btn-signal" onClick={() => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); }}>
-              Start learning <Icon name="arrow" size={16} />
-            </button>
-          </article>
-        )}
-        {nextQ && (
-          <article className="next-card">
-            <span className="next-kind"><Icon name="braces" size={15} /> Solve · {short(nextQ[0].name)}</span>
-            <h3>{nextQ[1][0]}</h3>
-            <p className="muted small">Your next unsolved core problem. Say the pattern out loud before you write code.</p>
-            <div className="btn-row">
-              <a className="btn" href={lcUrl(nextQ[1][1])} target="_blank" rel="noopener noreferrer">Solve on LeetCode <Icon name="arrow" size={16} /></a>
-              <Check id={questionId(nextQ[0].id, nextQ[1][1])}>Solved</Check>
-            </div>
-          </article>
-        )}
-        {nextSD && (
-          <article className="next-card">
-            <span className="next-kind"><Icon name="network" size={15} /> Design · out loud</span>
-            <h3>{nextSD.name}</h3>
-            <p className="muted small">Explain it in two minutes as if the interviewer just asked, then tick it off.</p>
-            <div className="btn-row">
-              <button className="btn btn-ghost" onClick={() => go('sd')}>Open System Design <Icon name="arrow" size={16} /></button>
-              <Check id={nextSD.id}>Done</Check>
-            </div>
-          </article>
-        )}
-        {!nextLearn && !nextQ && !nextSD && (
-          <article className="next-card"><h3>Everything is checked.</h3><p className="muted">Now redo the Motorq set against a 35-minute timer, out loud.</p></article>
-        )}
-      </div>
+      <h2 className="section-title">Continue where you left off</h2>
+      {primary ? (
+        <article className="focus-card">
+          <div className="focus-icon"><Icon name={primary.icon} size={22} /></div>
+          <div className="focus-copy">
+            <span className="next-kind">{primary.kind} · about 15 min</span>
+            <h3>{primary.title}</h3>
+            <p>{primary.copy}</p>
+          </div>
+          {primary.href
+            ? <a className="btn btn-signal" href={primary.href} target="_blank" rel="noopener noreferrer">{primary.label} <Icon name="arrow" size={16} /></a>
+            : <button className="btn btn-signal" onClick={primary.action}>{primary.label} <Icon name="arrow" size={16} /></button>}
+        </article>
+      ) : (
+        <article className="focus-card"><div className="focus-copy"><h3>You finished the plan.</h3><p>Redo the priority set with a 35-minute timer and explain your decisions out loud.</p></div></article>
+      )}
+
+      {(nextQ || nextSD) && nextLearn && (
+        <div className="quick-actions" aria-label="More ways to practice">
+          <span>Or choose:</span>
+          {nextQ && <a href={lcUrl(nextQ[1][1])} target="_blank" rel="noopener noreferrer"><Icon name="braces" size={16} /> Solve {nextQ[1][0]}</a>}
+          {nextSD && <button onClick={() => go('sd')}><Icon name="network" size={16} /> Review {nextSD.name}</button>}
+        </div>
+      )}
 
       <h2 className="section-title">Your tracks</h2>
       <div className="track-grid">
@@ -115,20 +108,10 @@ export function Home({ go, install }) {
         ))}
       </div>
 
-      {!install.installed && (
-        <Callout title="Use it like an app on your phone">
-          <p>
-            {install.canInstall
-              ? 'Chrome can install PrepHub: it gets its own home-screen icon, opens full-screen and works offline.'
-              : 'In Chrome on Android, open this site over HTTPS, then tap ⋮ → Install app. It opens full-screen and works offline.'}
-          </p>
-          {install.canInstall && <button className="btn btn-signal" onClick={install.install}><Icon name="download" size={16} /> Install app</button>}
-        </Callout>
-      )}
-
-      <Callout title="This week's Motorq focus" tone="star">
+      <details className="focus-details">
+        <summary>This week’s Motorq focus <span>5 priorities</span></summary>
         <ol>{motorq.priorities.slice(0, 5).map((p) => <li key={p}>{p}</li>)}</ol>
-      </Callout>
+      </details>
       <p className="reset-row">
         <button className="btn-ghost" onClick={() => { if (window.confirm('Reset all progress?')) reset(); }}>Reset all progress</button>
       </p>
@@ -287,16 +270,6 @@ export function SystemDesign() {
         <div className="chips">{reminderChips.map((c) => <span key={c} className="chip">{c}</span>)}</div>
       </Callout>
 
-      <h2>D. 45-minute answer framework</h2>
-      <ol className="steps">
-        {framework.map((f) => (
-          <li key={f.step}><div><b>{f.step}</b> <span className="tag">{f.mins} min</span><p className="muted">{f.detail}</p></div></li>
-        ))}
-      </ol>
-      <Callout title="LLM-feature variant">
-        <p>Motorq's JD requires LLM/agentic-tool fluency — be ready for "add an LLM-backed feature": latency budget (stream tokens, async where possible), cost (caching, smaller model for routing, batch), and fallback when the model fails or times out (rules-based default, circuit breaker, human-review queue). Also: eval set, prompt/version logging, PII redaction.</p>
-      </Callout>
-
       <h2>A. Primary guide — pick ONE, finish it</h2>
       <LinkGrid items={primaryGuide.map((g) => ({ ...g, name: g.primary ? `★ ${g.name}` : g.name }))} />
 
@@ -323,6 +296,16 @@ export function SystemDesign() {
           <ul className="concepts">{problems.filter((p) => p.group === g).map((p) => <Problem key={p.id} p={p} n={++n} />)}</ul>
         </section>
       ))}
+
+      <h2>D. 45-minute answer framework</h2>
+      <ol className="steps">
+        {framework.map((f) => (
+          <li key={f.step}><div><b>{f.step}</b> <span className="tag">{f.mins} min</span><p className="muted">{f.detail}</p></div></li>
+        ))}
+      </ol>
+      <Callout title="LLM-feature variant">
+        <p>Motorq's JD requires LLM/agentic-tool fluency — be ready for "add an LLM-backed feature": latency budget (stream tokens, async where possible), cost (caching, smaller model for routing, batch), and fallback when the model fails or times out (rules-based default, circuit breaker, human-review queue). Also: eval set, prompt/version logging, PII redaction.</p>
+      </Callout>
 
       <h2>E. Learning resources</h2>
       <div className="res-groups">

@@ -4,7 +4,7 @@
    cobalt for links/focus, tangerine for Motorq/asked.
    ============================================================ */
 :root {
-  --bg: #f4f5f7; --surface: #ffffff; --surface-2: #f3f4f6; --surface-3: #e8eaee; --stage: #fafafb;
+  --bg: #f7f7f8; --surface: #ffffff; --surface-2: #f4f4f5; --surface-3: #e9eaec; --stage: #fbfbfc;
   --border: #e4e7eb; --border-soft: #eef0f3; --border-strong: #c9ced6;
   --text: #0d0f12; --text-2: #343a44; --muted: #687080;
   --accent: #2f44e8; --accent-soft: #eef0fe; --accent-line: #ccd2fb;
@@ -97,7 +97,7 @@ button { font-family: inherit; }
 .theme-switch button { display: flex; align-items: center; justify-content: center; gap: 5px; height: 30px; border: 0; background: none; color: var(--muted); font: 500 .78rem var(--font); border-radius: 8px; cursor: pointer; }
 .theme-switch button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
 
-.content { flex: 1; min-width: 0; max-width: 1080px; padding: 44px 56px 96px; animation: rise .35s cubic-bezier(.2, .7, .2, 1) both; }
+.content { flex: 1; min-width: 0; max-width: 1040px; padding: 44px 56px 96px; animation: rise .35s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--border);
@@ -215,6 +215,17 @@ button { font-family: inherit; }
 .next-learn .muted, .next-learn .next-kind { color: var(--feature-muted); }
 .next-learn .next-kind .icon { color: var(--signal); }
 
+.focus-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 22px; border-radius: 18px; background: var(--feature-bg); color: var(--feature-fg); box-shadow: var(--shadow); }
+.focus-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--signal); color: var(--signal-ink); }
+.focus-copy h3 { margin: 4px 0; font: 650 1.32rem/1.2 var(--display); letter-spacing: -.02em; }
+.focus-copy p { margin: 0; color: var(--feature-muted); font-size: .9rem; }
+.focus-card .next-kind { color: var(--feature-muted); }
+.quick-actions { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 10px 2px 2px; color: var(--muted); font-size: .82rem; scrollbar-width: none; }
+.quick-actions::-webkit-scrollbar { display: none; }
+.quick-actions > span { flex-shrink: 0; }
+.quick-actions a, .quick-actions button { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; min-height: 34px; padding: 0 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-2); font: 550 .8rem var(--font); text-decoration: none; cursor: pointer; }
+.quick-actions a:hover, .quick-actions button:hover { border-color: var(--border-strong); color: var(--text); }
+
 .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(195px, 100%), 1fr)); gap: 12px; }
 .track { display: flex; flex-direction: column; gap: 4px; padding: 16px; text-align: left; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: inherit; font: inherit; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s, border-color .15s; }
 .track:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--border-strong); }
@@ -225,6 +236,13 @@ button { font-family: inherit; }
 .track-meta { font-size: .8rem; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
 .track .bar { flex: none; height: 6px; }
 .reset-row { margin-top: 44px; }
+.focus-details { margin: 20px 0 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.focus-details summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; cursor: pointer; font-weight: 620; list-style: none; }
+.focus-details summary::-webkit-details-marker { display: none; }
+.focus-details summary::after { content: '+'; color: var(--muted); font: 600 1rem var(--mono); }
+.focus-details[open] summary::after { content: '−'; }
+.focus-details summary span { margin-left: auto; color: var(--muted); font-size: .78rem; font-weight: 500; }
+.focus-details ol { margin: 0; padding: 0 38px 16px; color: var(--text-2); }
 
 /* ---------- DSA patterns ---------- */
 .pattern { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow-sm); transition: border-color .15s, box-shadow .15s; }
@@ -477,6 +495,8 @@ ol.qlist { list-style: none; }
   .home-hero .ring-center b { font-size: 1.3rem; } .home-hero .ring-center small { display: none; }
   .home-hero-text { padding-right: 92px; } .home-hero .stat-row { margin-right: -92px; }
   .stat { padding: 7px 11px; }
+  .focus-card { grid-template-columns: auto 1fr; padding: 18px; }
+  .focus-card .btn { grid-column: 1 / -1; width: 100%; }
   .track-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .track { padding: 14px; }
 
