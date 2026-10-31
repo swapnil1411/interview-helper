@@ -7,7 +7,7 @@ import { Icon } from './components/ui';
 import './styles.css';
 
 const TABS = [
-  { id: 'home', label: 'Today', short: 'Today', icon: 'home', C: Home },
+  { id: 'home', label: 'Today', short: 'Today', icon: 'home', n: '00', C: Home },
   { id: 'learn', label: 'Learn', short: 'Learn', icon: 'play', n: '01', C: Learn },
   { id: 'dsa', label: 'Practice', short: 'Practice', icon: 'braces', n: '02', C: DSA },
   { id: 'sd', label: 'System Design', short: 'Design', icon: 'network', n: '03', C: SystemDesign },
@@ -73,7 +73,7 @@ function App() {
   useEffect(() => {
     const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
     document.documentElement.dataset.theme = resolved;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#111214' : '#f5f5f2');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#141312' : '#eef0f2');
     safeSet('interview-prep-theme', theme);
   }, [theme, systemDark]);
 
@@ -124,7 +124,7 @@ function App() {
       </nav>
 
       <main className="content" key={tab}>
-        {active.n && <p className="eyebrow">Section {active.n} · {active.label}</p>}
+        {active.id !== 'home' && <p className="eyebrow">Section {active.n} · {active.label}</p>}
         <Active go={go} install={install} />
       </main>
     </div>

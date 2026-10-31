@@ -1,123 +1,95 @@
 import { useState } from 'react';
 import { useProgress, ids, pct, safeSet } from '../progress';
-import { ExtLink, Check, Bar, Star, Callout, LinkGrid, Icon, Ring } from './ui';
+import { ExtLink, Check, Bar, Star, Callout, LinkGrid, Icon } from './ui';
 import { patterns, retainRules, masteryLadder, dsaLinks, lcUrl, questionId, allQuestions } from '../data/dsa';
 import { primaryGuide, roadmap, concepts, framework, problems, reminderChips, resources, ytSearch } from '../data/systemDesign';
 import {
   motorq, remoteIndiaGeneral, linkedinSearches, hiringNow, hiringSnapshotDate, remoteJobBoards, openings, atsSearches,
 } from '../data/companies';
 import { siteGroups, interviewDayChecklist } from '../data/sites';
+import { drawers } from '../data/loop';
 
-/* ---------------- Home ---------------- */
+/* ---------------- Today: the catalog drawer ---------------- */
 const DAY = 86400000;
-const dayKey = (t) => new Date(t).toDateString();
-function streakOf(done) {
-  const days = new Set(Object.values(done).filter((v) => typeof v === 'number').map(dayKey));
-  let n = 0, t = Date.now();
-  if (!days.has(dayKey(t))) t -= DAY; // nothing yet today: the streak is still alive from yesterday
-  while (days.has(dayKey(t))) { n += 1; t -= DAY; }
-  return n;
-}
-const greeting = () => {
-  const h = new Date().getHours();
-  return h < 5 ? 'Late-night prep' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-};
-const short = (name) => name.replace(/\s*\(.*\)/, '');
+const FOR = { Motorq: 'Motorq', Both: 'Motorq + remote', Remote: 'Remote' };
 
-export function Home({ go, install }) {
-  const { done, reset } = useProgress();
-  const all = [...ids.dsa, ...ids.sd, ...ids.company, ...ids.sites, ...ids.scroll];
-  const count = (list) => list.filter((i) => done[i]).length;
+function Mark({ done, label, onClick }) {
+  return <button type="button" className={`mark ${done ? 'is-filled' : ''}`} aria-pressed={done} aria-label={`${done ? 'Unmark' : 'Mark'} ${label} done`} onClick={onClick} />;
+}
+
+export function Home({ go }) {
+  const { done, toggle } = useProgress();
+  const left = (d) => d.cards.filter((c) => !done[c.id]).length;
+  // The thinnest drawer leads: largest share of cards still to pull; ties go to the drawer with more cards left.
+  const share = (d) => left(d) / d.cards.length;
+  const thinnest = drawers.reduce((best, d) => (share(d) > share(best) || (share(d) === share(best) && left(d) > left(best)) ? d : best), drawers[0]);
+  const [openId, setOpenId] = useState(null);
+  const open = drawers.find((d) => d.id === openId) || thinnest;
+  const next = open.cards.find((c) => !done[c.id]);
+  const allLeft = drawers.reduce((n, d) => n + left(d), 0);
   const week = Object.values(done).filter((t) => typeof t === 'number' && Date.now() - t < 7 * DAY).length;
   const nextLearn = patterns.find((p) => !done[`scroll:${p.id}`]);
-  const nextQ = patterns.map((p) => [p, p.questions.find((q) => !done[questionId(p.id, q[1])])]).find(([, q]) => q);
-  const sdItems = [
-    ...concepts.flatMap((t) => t.items.map((c) => ({ id: `sd:c:${c.id}`, name: c.name }))),
-    ...problems.map((p) => ({ id: `sd:p:${p.id}`, name: p.name })),
-  ];
-  const nextSD = sdItems.find((c) => !done[c.id]);
-  const tracks = [
-    { tab: 'learn', icon: 'play', name: 'Learn', list: ids.scroll, sub: 'patterns understood' },
-    { tab: 'dsa', icon: 'braces', name: 'Practice', list: ids.dsa, sub: `coding problems · core ${pct(ids.dsaCore, done)}%` },
-    { tab: 'sd', icon: 'network', name: 'System Design', list: ids.sd, sub: 'concepts & problems' },
-    { tab: 'company', icon: 'briefcase', name: 'Companies', list: ids.company, sub: 'targets & interview notes' },
-    { tab: 'sites', icon: 'compass', name: 'Resources', list: ids.sites, sub: 'tools & interview checklist' },
-  ];
-  const overall = pct(all, done);
-  const primary = nextLearn
-    ? { kind: 'Learn next', icon: 'play', title: short(nextLearn.name), copy: 'Understand the pattern with a visual walkthrough, then try it yourself.', label: 'Continue learning', action: () => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); } }
-    : nextQ
-      ? { kind: 'Practice next', icon: 'braces', title: nextQ[1][0], copy: 'Your next unsolved core problem. Name the pattern before you start coding.', label: 'Start problem', href: lcUrl(nextQ[1][1]) }
-      : nextSD
-        ? { kind: 'Design next', icon: 'network', title: nextSD.name, copy: 'Explain it out loud in two minutes, as if the interviewer just asked.', label: 'Open System Design', action: () => go('sd') }
-        : null;
+
+  const onTabKey = (e, i) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    const d = drawers[(i + step + drawers.length) % drawers.length];
+    setOpenId(d.id);
+    document.getElementById(`drawer-tab-${d.id}`)?.focus();
+  };
 
   return (
     <>
-      <section className="home-hero">
-        <div className="home-hero-text">
-          <p className="eyebrow">Your interview plan</p>
-          <h1>{greeting()}.</h1>
-          <p className="lede">Keep it simple: finish one focused session today.</p>
-          <div className="stat-row">
-            <div className="stat stat-hot"><Icon name="flame" size={18} /><b>{streakOf(done)}</b><span>day streak</span></div>
-            <div className="stat"><b>{week}</b><span>done this week</span></div>
-            <div className="stat"><b>{count(ids.dsa)}</b><span>of {ids.dsa.length} problems</span></div>
-          </div>
-        </div>
-        <Ring value={overall} size={148} stroke={12}><b>{overall}%</b><small>{count(all)} / {all.length}</small></Ring>
-      </section>
+      <header className="today-head">
+        <p className="kicker">Today · interview loop</p>
+        <h1>{allLeft === 0 ? 'Every card is pulled. Run the loop again, timed.' : <>{thinnest.name} is your thinnest round. Pull the next card.</>}</h1>
+        <p className="today-meta"><span>{allLeft} cards left across both targets</span>{week > 0 && <span>{week} pulled this week</span>}</p>
+      </header>
 
-      <h2 className="section-title">Continue where you left off</h2>
-      {primary ? (
-        <article className="focus-card">
-          <div className="focus-icon"><Icon name={primary.icon} size={22} /></div>
-          <div className="focus-copy">
-            <span className="next-kind">{primary.kind} · about 15 min</span>
-            <h3>{primary.title}</h3>
-            <p>{primary.copy}</p>
-          </div>
-          {primary.href
-            ? <a className="btn btn-signal" href={primary.href} target="_blank" rel="noopener noreferrer">{primary.label} <Icon name="arrow" size={16} /></a>
-            : <button className="btn btn-signal" onClick={primary.action}>{primary.label} <Icon name="arrow" size={16} /></button>}
-        </article>
-      ) : (
-        <article className="focus-card"><div className="focus-copy"><h3>You finished the plan.</h3><p>Redo the priority set with a 35-minute timer and explain your decisions out loud.</p></div></article>
-      )}
-
-      {(nextQ || nextSD) && nextLearn && (
-        <div className="quick-actions" aria-label="More ways to practice">
-          <span>Or choose:</span>
-          {nextQ && <a href={lcUrl(nextQ[1][1])} target="_blank" rel="noopener noreferrer"><Icon name="braces" size={16} /> Solve {nextQ[1][0]}</a>}
-          {nextSD && <button onClick={() => go('sd')}><Icon name="network" size={16} /> Review {nextSD.name}</button>}
-        </div>
-      )}
-
-      <h2 className="section-title">Your tracks</h2>
-      <div className="track-grid">
-        {tracks.map((t) => (
-          <button key={t.tab} className="track" onClick={() => go(t.tab)}>
-            <span className="track-top">
-              <span className="track-icon"><Icon name={t.icon} /></span>
-              <span className="track-pct">{pct(t.list, done)}%</span>
-            </span>
-            <span className="track-name">{t.name}</span>
-            <span className="track-meta">{count(t.list)}/{t.list.length} {t.sub}</span>
-            <span className="bar"><span className="bar-fill" style={{ width: `${pct(t.list, done)}%` }} /></span>
+      <div className="drawer-tabs" role="tablist" aria-label="Interview rounds">
+        {drawers.map((d, i) => (
+          <button key={d.id} id={`drawer-tab-${d.id}`} role="tab" aria-selected={d === open} aria-controls="drawer-card" tabIndex={d === open ? 0 : -1}
+            className={`drawer-tab ${d === open ? 'is-open' : ''} ${left(d) === 0 ? 'is-spent' : ''}`} style={{ '--stagger': i % 3 }}
+            onClick={() => setOpenId(d.id)} onKeyDown={(e) => onTabKey(e, i)}>
+            <span className="drawer-tab-name">{d.tab}</span>
+            <span className="drawer-tab-left">{left(d) === 0 ? 'all pulled' : `${left(d)} left`}</span>
           </button>
         ))}
       </div>
 
-      <details className="focus-details">
-        <summary>This week’s Motorq focus <span>5 priorities</span></summary>
-        <ol>{motorq.priorities.slice(0, 5).map((p) => <li key={p}>{p}</li>)}</ol>
-      </details>
-      <p className="reset-row">
-        <button className="btn-ghost" onClick={() => { if (window.confirm('Reset all progress?')) reset(); }}>Reset all progress</button>
-      </p>
+      <article id="drawer-card" className="index-card" role="tabpanel" aria-labelledby={`drawer-tab-${open.id}`} key={open.id}>
+        <p className="call">{open.name} · <span className="for">{FOR[open.for]}</span></p>
+        <h2>{next ? next.title : `All ${open.cards.length} cards pulled.`}{next?.asked && <span className="tag tag-asked">Asked at Motorq</span>}</h2>
+        <p className="index-note">{open.note}</p>
+        <ol className="card-rows">
+          {open.cards.map((c) => (
+            <li key={c.id} className={`card-row ${done[c.id] ? 'is-done' : ''} ${c === next ? 'is-next' : ''}`}>
+              <Mark done={!!done[c.id]} label={c.title} onClick={() => toggle(c.id)} />
+              <span className="card-title">{c.slug ? <ExtLink href={lcUrl(c.slug)}>{c.title}</ExtLink> : c.title}</span>
+              <span className="card-call">{c.call}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="btn-row">
+          {next && (next.slug
+            ? <a className="btn btn-signal" href={lcUrl(next.slug)} target="_blank" rel="noopener noreferrer">Pull next card: {next.title} <Icon name="arrow" size={16} /></a>
+            : <button className="btn btn-signal" onClick={() => toggle(next.id)}>Mark “{next.title.split(/[—(]/)[0].trim()}” done</button>)}
+          <button className="btn-ghost" onClick={() => go('company')}>Full round intel</button>
+        </div>
+      </article>
+
+      <section className="also">
+        <h2 className="section-title">Also on the desk</h2>
+        <ul className="also-list">
+          {nextLearn && <li><button onClick={() => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); }}><span className="card-call">LEARN·{String(patterns.indexOf(nextLearn) + 1).padStart(2, '0')}</span>{nextLearn.name.replace(/\s*\(.*\)/, '')}<span className="also-go">Watch walkthrough</span></button></li>}
+          <li><button onClick={() => go('dsa')}><span className="card-call">PRACTICE</span>{count(ids.dsa, done)} of {ids.dsa.length} problems solved<span className="also-go">Open Practice</span></button></li>
+          <li><button onClick={() => go('company')}><span className="card-call">JOBS</span>Remote openings snapshot, {hiringSnapshotDate}<span className="also-go">Check live links</span></button></li>
+        </ul>
+      </section>
     </>
   );
 }
+const count = (list, done) => list.filter((i) => done[i]).length;
 
 /* ---------------- DSA ---------------- */
 function QRow({ pid, t, slug, note, star }) {
@@ -440,7 +412,7 @@ export function Company() {
 
 /* ---------------- Sites ---------------- */
 export function Sites() {
-  const { done } = useProgress();
+  const { done, reset } = useProgress();
   return (
     <>
       <header className="page-head">
@@ -454,6 +426,9 @@ export function Sites() {
       <div className="res-groups">
         {siteGroups.map((g) => <section key={g.title} className="card"><h3>{g.title}</h3><LinkGrid items={g.items} /></section>)}
       </div>
+      <p className="reset-row">
+        <button className="btn-ghost" onClick={() => { if (window.confirm('Reset all progress? Every pulled card goes back in the drawer.')) reset(); }}>Reset all progress</button>
+      </p>
     </>
   );
 }

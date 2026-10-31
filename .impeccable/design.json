@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T00:00:00Z",
+  "title": "Design System: PrepHub",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": { "role": "primary", "displayName": "Signal Blue", "canonical": "#3156c8", "tonalRamp": ["#121f4a","#1b2e6e","#2444a8","#3156c8","#5f7fe0","#91a8ff","#cfd8f6","#edf1ff"] },
+      "star-amber": { "role": "secondary", "displayName": "Star Amber", "canonical": "#8b4b10", "tonalRamp": ["#2b2117","#54402a","#8b4b10","#9a5b13","#d9a25f","#e2ad6c","#ead3b8","#faf1e6"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#f5f5f2", "tonalRamp": ["#111214","#191a1d","#2a2b2f","#44464c","#737378","#c5c5bf","#e5e5e0","#f5f5f2"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#1c1c1e" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles." },
+      "label": { "displayName": "Mono Label", "purpose": "Eyebrows, nav numbers, counters." }
+    },
+    "shadows": [
+      { "name": "whisper", "value": "0 1px 2px rgba(20,20,18,.04)", "purpose": "Selected theme-switch segment." },
+      { "name": "lift", "value": "0 6px 18px rgba(20,20,18,.07)", "purpose": "Hover on clickable cards only." }
+    ],
+    "motion": [
+      { "name": "ease-progress", "value": "cubic-bezier(.2,.7,.2,1)", "purpose": "Progress fill and switch thumb." },
+      { "name": "rise", "value": ".25s ease-out", "purpose": "Content entrance (6px rise + fade)." },
+      { "name": "hover", "value": ".15s", "purpose": "Border/color/transform hover transitions." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "1100px" },
+      { "name": "mobile", "value": "820px" },
+      { "name": "small", "value": "640px" },
+      { "name": "tiny", "value": "380px" }
+    ]
+  },
+  "components": [
+    { "name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "Default solid action in Button Ink.", "html": "<button class=\"ds-btn\">Continue</button>", "css": ".ds-btn{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:8px;border:1px solid transparent;background:var(--btn-bg,#202124);color:var(--btn-fg,#fff);font:620 .88rem system-ui,sans-serif;cursor:pointer}.ds-btn:hover{opacity:.9}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid var(--accent,#3156c8);outline-offset:2px}" },
+    { "name": "Signal Button", "kind": "button", "refersTo": "button-signal", "description": "The one key action per view.", "html": "<button class=\"ds-btn-signal\">Start session</button>", "css": ".ds-btn-signal{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:8px;border:1px solid var(--signal-strong,#2444a8);background:var(--signal,#3156c8);color:var(--signal-ink,#fff);font:620 .88rem system-ui,sans-serif;cursor:pointer}.ds-btn-signal:hover{opacity:.9}.ds-btn-signal:active{transform:scale(.98)}.ds-btn-signal:focus-visible{outline:2px solid var(--accent,#3156c8);outline-offset:2px}" },
+    { "name": "Ghost Button", "kind": "button", "refersTo": "button-ghost", "description": "Secondary action.", "html": "<button class=\"ds-btn-ghost\">Skip</button>", "css": ".ds-btn-ghost{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:8px;border:1px solid var(--border,#dfdfda);background:var(--surface,#fff);color:var(--text,#1c1c1e);font:620 .88rem system-ui,sans-serif;cursor:pointer}.ds-btn-ghost:hover{border-color:var(--border-strong,#c5c5bf)}.ds-btn-ghost:focus-visible{outline:2px solid var(--accent,#3156c8);outline-offset:2px}" },
+    { "name": "Card", "kind": "card", "refersTo": "card", "description": "Flat bordered container; lifts on hover when clickable.", "html": "<div class=\"ds-card\"><h3>Monotonic stack</h3><p>Next greater element family.</p></div>", "css": ".ds-card{background:var(--surface,#fff);border:1px solid var(--border,#dfdfda);border-radius:12px;padding:18px;color:var(--text,#1c1c1e);font:400 15px/1.6 system-ui,sans-serif;transition:border-color .15s,transform .15s,box-shadow .15s;cursor:pointer}.ds-card h3{margin:0 0 4px;font-size:1.02rem;font-weight:620}.ds-card p{margin:0;color:var(--muted,#737378)}.ds-card:hover{border-color:var(--border-strong,#c5c5bf);transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,20,18,.07)}" },
+    { "name": "Tags", "kind": "chip", "refersTo": "tag", "description": "Neutral, star and asked variants.", "html": "<span class=\"ds-tag\">Graphs</span> <span class=\"ds-tag ds-tag-star\">★ Starred</span> <span class=\"ds-tag ds-tag-asked\">Asked</span>", "css": ".ds-tag{display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:6px;border:1px solid transparent;background:var(--surface-2,#f0f0ed);color:var(--muted,#737378);font:600 11.5px system-ui,sans-serif}.ds-tag-star{background:var(--star-soft,#faf1e6);color:var(--star,#8b4b10);border-color:var(--star-line,#ead3b8)}.ds-tag-asked{background:var(--hot,#9a5b13);color:#fff}" },
+    { "name": "Checkbox", "kind": "input", "description": "Custom progress checkbox.", "html": "<label class=\"ds-check\"><input type=\"checkbox\" checked> Koko Eating Bananas</label>", "css": ".ds-check{display:flex;gap:11px;align-items:center;font:400 15px system-ui,sans-serif;color:var(--text,#1c1c1e);cursor:pointer}.ds-check input{appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--border-strong,#c5c5bf);border-radius:6px;background:var(--surface,#fff);cursor:pointer;transition:background .15s,border-color .15s}.ds-check input:hover{border-color:var(--accent,#3156c8)}.ds-check input:checked{background:var(--signal,#3156c8);border-color:var(--signal-strong,#2444a8)}.ds-check input:focus-visible{outline:2px solid var(--accent,#3156c8);outline-offset:2px}" },
+    { "name": "Sidebar Nav", "kind": "nav", "refersTo": "nav-item-active", "description": "Desktop nav items with mono numbers.", "html": "<nav class=\"ds-nav\"><a class=\"on\" href=\"#\">Learn <i>01</i></a><a href=\"#\">Practice <i>02</i></a></nav>", "css": ".ds-nav{display:flex;flex-direction:column;gap:2px;width:208px;padding:8px;background:var(--surface-2,#f0f0ed)}.ds-nav a{display:flex;align-items:center;height:40px;padding:0 10px;border:1px solid transparent;border-radius:11px;color:var(--text-2,#414145);font:500 .92rem system-ui,sans-serif;text-decoration:none}.ds-nav a i{margin-left:auto;font:500 10.5px ui-monospace,monospace;font-style:normal;color:var(--muted,#737378)}.ds-nav a:hover{color:var(--text,#1c1c1e)}.ds-nav a.on{background:var(--surface,#fff);border-color:var(--border,#dfdfda);color:var(--text,#1c1c1e);font-weight:620}" },
+    { "name": "Progress Bar", "kind": "custom", "refersTo": "progress-bar", "description": "Signature pill progress with mono readout.", "html": "<div class=\"ds-bar\"><span class=\"ds-track\"><span style=\"width:42%\"></span></span><b>42%</b></div>", "css": ".ds-bar{display:flex;align-items:center;gap:10px;width:260px}.ds-track{flex:1;height:8px;background:var(--surface-3,#e5e5e0);border-radius:99px;overflow:hidden}.ds-track span{display:block;height:100%;background:var(--fill,#3156c8);border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.2,1)}.ds-bar b{font:500 12px ui-monospace,monospace;color:var(--muted,#737378)}" }
+  ],
+  "narrative": {
+    "northStar": "The Study Notebook",
+    "overview": "PrepHub looks like a well-kept notebook: warm off-white paper, near-black ink, and one blue pen kept for whatever matters right now. It's a tool you come back to every day, so it stays calm. Density is moderate, surfaces are flat, and type does the organizing rather than decoration.\n\nThe blue is functional, not decorative. It marks progress, the active tab, checked items and the single next action. Amber is the only other voice: it flags starred and \"asked at Motorq\" items. Everything else is grey. Dark mode is the same notebook read under a desk lamp, with the same roles in inverted tones.",
+    "keyCharacteristics": ["Only system fonts, with monospace for eyebrows, counters and numbers.", "One accent (Signal Blue) plus amber for priority. No decorative color.", "Flat bordered cards; lift appears only on hover.", "Desktop sidebar becomes a bottom tab bar with a pill indicator on mobile.", "Full light/dark parity through CSS custom properties on `:root` and `[data-theme='dark']`."],
+    "rules": [
+      { "name": "The One Pen Rule", "body": "Signal Blue means \"this is progress or the next action.\" If it's decorative, remove it.", "section": "colors" },
+      { "name": "The Amber Means Priority Rule", "body": "Amber is only for starred or reported-asked content.", "section": "colors" },
+      { "name": "The Numbers Are Mono Rule", "body": "Counts, percentages and step numbers use the mono stack.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Nothing casts a shadow until it's hovered.", "section": "elevation" }
+    ],
+    "dos": ["**Do** use the CSS variables, never raw hex, so dark mode keeps working.", "**Do** keep a single Signal Blue action per view; other actions use Button Ink or ghost buttons.", "**Do** render numbers and counters in the mono stack.", "**Do** keep cards flat with a 1px border and 12px radius."],
+    "donts": ["**Don't** add web fonts. The system stack is deliberate.", "**Don't** use Signal Blue or amber decoratively.", "**Don't** add resting shadows or gradients to cards.", "**Don't** ship motion that ignores `prefers-reduced-motion`."]
+  }
+}
