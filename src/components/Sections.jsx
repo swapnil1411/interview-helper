@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useProgress, ids, pct, safeSet } from '../progress';
+import { useProgress, ids, pct } from '../progress';
 import { ExtLink, Check, Bar, Star, Callout, LinkGrid, Icon } from './ui';
 import { patterns, retainRules, masteryLadder, dsaLinks, lcUrl, questionId, allQuestions } from '../data/dsa';
 import { primaryGuide, roadmap, concepts, framework, problems, reminderChips, resources, ytSearch } from '../data/systemDesign';
@@ -7,89 +7,6 @@ import {
   motorq, remoteIndiaGeneral, linkedinSearches, hiringNow, hiringSnapshotDate, remoteJobBoards, openings, atsSearches,
 } from '../data/companies';
 import { siteGroups, interviewDayChecklist } from '../data/sites';
-import { drawers } from '../data/loop';
-
-/* ---------------- Today: the catalog drawer ---------------- */
-const DAY = 86400000;
-const FOR = { Motorq: 'Motorq', Both: 'Motorq + remote', Remote: 'Remote' };
-
-function Mark({ done, label, onClick }) {
-  return <button type="button" className={`mark ${done ? 'is-filled' : ''}`} aria-pressed={done} aria-label={`${done ? 'Unmark' : 'Mark'} ${label} done`} onClick={onClick} />;
-}
-
-export function Home({ go }) {
-  const { done, toggle } = useProgress();
-  const left = (d) => d.cards.filter((c) => !done[c.id]).length;
-  // The thinnest drawer leads: largest share of cards still to pull; ties go to the drawer with more cards left.
-  const share = (d) => left(d) / d.cards.length;
-  const thinnest = drawers.reduce((best, d) => (share(d) > share(best) || (share(d) === share(best) && left(d) > left(best)) ? d : best), drawers[0]);
-  const [openId, setOpenId] = useState(null);
-  const open = drawers.find((d) => d.id === openId) || thinnest;
-  const next = open.cards.find((c) => !done[c.id]);
-  const allLeft = drawers.reduce((n, d) => n + left(d), 0);
-  const week = Object.values(done).filter((t) => typeof t === 'number' && Date.now() - t < 7 * DAY).length;
-  const nextLearn = patterns.find((p) => !done[`scroll:${p.id}`]);
-
-  const onTabKey = (e, i) => {
-    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-    if (!step) return;
-    const d = drawers[(i + step + drawers.length) % drawers.length];
-    setOpenId(d.id);
-    document.getElementById(`drawer-tab-${d.id}`)?.focus();
-  };
-
-  return (
-    <>
-      <header className="today-head">
-        <p className="kicker">Today · interview loop</p>
-        <h1>{allLeft === 0 ? 'Every card is pulled. Run the loop again, timed.' : <>{thinnest.name} is your thinnest round. Pull the next card.</>}</h1>
-        <p className="today-meta"><span>{allLeft} cards left across both targets</span>{week > 0 && <span>{week} pulled this week</span>}</p>
-      </header>
-
-      <div className="drawer-tabs" role="tablist" aria-label="Interview rounds">
-        {drawers.map((d, i) => (
-          <button key={d.id} id={`drawer-tab-${d.id}`} role="tab" aria-selected={d === open} aria-controls="drawer-card" tabIndex={d === open ? 0 : -1}
-            className={`drawer-tab ${d === open ? 'is-open' : ''} ${left(d) === 0 ? 'is-spent' : ''}`} style={{ '--stagger': i % 3 }}
-            onClick={() => setOpenId(d.id)} onKeyDown={(e) => onTabKey(e, i)}>
-            <span className="drawer-tab-name">{d.tab}</span>
-            <span className="drawer-tab-left">{left(d) === 0 ? 'all pulled' : `${left(d)} left`}</span>
-          </button>
-        ))}
-      </div>
-
-      <article id="drawer-card" className="index-card" role="tabpanel" aria-labelledby={`drawer-tab-${open.id}`} key={open.id}>
-        <p className="call">{open.name} · <span className="for">{FOR[open.for]}</span></p>
-        <h2>{next ? next.title : `All ${open.cards.length} cards pulled.`}{next?.asked && <span className="tag tag-asked">Asked at Motorq</span>}</h2>
-        <p className="index-note">{open.note}</p>
-        <ol className="card-rows">
-          {open.cards.map((c) => (
-            <li key={c.id} className={`card-row ${done[c.id] ? 'is-done' : ''} ${c === next ? 'is-next' : ''}`}>
-              <Mark done={!!done[c.id]} label={c.title} onClick={() => toggle(c.id)} />
-              <span className="card-title">{c.slug ? <ExtLink href={lcUrl(c.slug)}>{c.title}</ExtLink> : c.title}</span>
-              <span className="card-call">{c.call}</span>
-            </li>
-          ))}
-        </ol>
-        <div className="btn-row">
-          {next && (next.slug
-            ? <a className="btn btn-signal" href={lcUrl(next.slug)} target="_blank" rel="noopener noreferrer">Pull next card: {next.title} <Icon name="arrow" size={16} /></a>
-            : <button className="btn btn-signal" onClick={() => toggle(next.id)}>Mark “{next.title.split(/[—(]/)[0].trim()}” done</button>)}
-          <button className="btn-ghost" onClick={() => go('company')}>Full round intel</button>
-        </div>
-      </article>
-
-      <section className="also">
-        <h2 className="section-title">Also on the desk</h2>
-        <ul className="also-list">
-          {nextLearn && <li><button onClick={() => { safeSet('interview-prep-learn-mode', 'general'); go('learn', `learn-${nextLearn.id}`); }}><span className="card-call">LEARN·{String(patterns.indexOf(nextLearn) + 1).padStart(2, '0')}</span>{nextLearn.name.replace(/\s*\(.*\)/, '')}<span className="also-go">Watch walkthrough</span></button></li>}
-          <li><button onClick={() => go('dsa')}><span className="card-call">PRACTICE</span>{count(ids.dsa, done)} of {ids.dsa.length} problems solved<span className="also-go">Open Practice</span></button></li>
-          <li><button onClick={() => go('company')}><span className="card-call">JOBS</span>Remote openings snapshot, {hiringSnapshotDate}<span className="also-go">Check live links</span></button></li>
-        </ul>
-      </section>
-    </>
-  );
-}
-const count = (list, done) => list.filter((i) => done[i]).length;
 
 /* ---------------- DSA ---------------- */
 function QRow({ pid, t, slug, note, star }) {
@@ -295,71 +212,10 @@ export function Company() {
   return (
     <>
       <header className="page-head">
-        <h1>Company Intel</h1>
-        <Bar value={pct(ids.company, done)} label="Overall" />
+        <h1>Remote jobs</h1>
       </header>
 
-      <section className="hero">
-        <div className="row-between">
-          <h2>Motorq <Star>Primary target</Star></h2>
-          <div className="btn-row">
-            <ExtLink href={motorq.careers} className="btn">Careers</ExtLink>
-            <ExtLink href={motorq.linkedinPeople} className="btn">Find referrals on LinkedIn</ExtLink>
-          </div>
-        </div>
-        <p>{motorq.what}</p>
-
-        <h3>What Motorq actually asks — round by round</h3>
-        <div className="asked-grid">
-          {motorq.rounds.map((r, i) => (
-            <div key={r.round} className="asked">
-              <div className="asked-head"><span className="asked-num">{i + 1}</span>{r.round}</div>
-              <ul>
-                {r.asked.map((a) => (
-                  <li key={a.q}>
-                    <span className="asked-q">{a.q}</span>
-                    {a.practice.length > 0 && (
-                      <span className="asked-practice">
-                        Practice: {a.practice.map(([t, slug]) => <ExtLink key={slug} href={lcUrl(slug)}>{t}</ExtLink>)}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <h3>Interview loop</h3>
-        <ol className="loop">{motorq.loop.map((s) => <li key={s}>{s}</li>)}</ol>
-        <ul>{motorq.loopNotes.map((s) => <li key={s}>{s}</li>)}</ul>
-
-        <h3>Confirmed question types (summary)</h3>
-        <table className="table"><tbody>
-          {motorq.questionTypes.map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}
-        </tbody></table>
-
-        <Callout title="OA character" tone="warn"><p>{motorq.oa}</p></Callout>
-
-        <div className="two-col">
-          <div>
-            <h3>How I match the JD</h3>
-            <ul className="qlist">
-              {motorq.jdMatch.map((j) => (
-                <li key={j.id}><Check id={`co:jd:${j.id}`}>{j.ok ? '✓ ' : '⚠ '}{j.label}</Check></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3>Prep priorities (ranked)</h3>
-            <ol className="qlist">
-              {motorq.priorities.map((p, i) => <li key={p}><Check id={`co:pri:${i}`}>{i + 1}. {p}</Check></li>)}
-            </ol>
-          </div>
-        </div>
-        <h3>Sources</h3>
-        <LinkGrid items={motorq.sources} />
-      </section>
+      <p className="muted">Motorq and per-company interview intel now live at the bottom of Analyse.</p>
 
       <h2>Remote product companies in India — interview pattern</h2>
       <p>{remoteIndiaGeneral.summary}</p>

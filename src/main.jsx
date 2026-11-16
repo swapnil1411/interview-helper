@@ -1,17 +1,18 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ProgressProvider, useProgress, ids, pct, safeGet, safeSet } from './progress';
-import { Home, DSA, SystemDesign, Company, Sites } from './components/Sections';
+import { DSA, SystemDesign, Company, Sites } from './components/Sections';
+import { Analyse } from './components/Analyse';
 import { Learn } from './components/Learn';
 import { Icon } from './components/ui';
 import './styles.css';
 
 const TABS = [
-  { id: 'home', label: 'Today', short: 'Today', icon: 'home', n: '00', C: Home },
+  { id: 'home', label: 'Analyse', short: 'Analyse', icon: 'home', n: '00', C: Analyse },
   { id: 'learn', label: 'Learn', short: 'Learn', icon: 'play', n: '01', C: Learn },
   { id: 'dsa', label: 'Practice', short: 'Practice', icon: 'braces', n: '02', C: DSA },
   { id: 'sd', label: 'System Design', short: 'Design', icon: 'network', n: '03', C: SystemDesign },
-  { id: 'company', label: 'Companies', short: 'Jobs', icon: 'briefcase', n: '04', C: Company },
+  { id: 'company', label: 'Jobs', short: 'Jobs', icon: 'briefcase', n: '04', C: Company },
   { id: 'sites', label: 'Resources', short: 'More', icon: 'compass', n: '05', C: Sites },
 ];
 const THEMES = [['light', 'sun', 'Light'], ['dark', 'moon', 'Dark'], ['system', 'monitor', 'Auto']];

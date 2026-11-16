@@ -1,7 +1,7 @@
 // PrepHub service worker: makes the installed app open (and the diagrams work) offline.
 // Pages: network-first, so a new deploy shows up on the next launch. Assets + fonts: stale-while-revalidate.
 // Everything else (YouTube, LeetCode, articles) goes straight to the network.
-const CACHE = 'prephub-v1';
+const CACHE = 'prephub-v2';
 const CORE = ['./', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -46,6 +46,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (url.pathname.endsWith('/api/leetcode')) return; // live data, never cached
   if (url.origin !== self.location.origin && !FONT_HOSTS.includes(url.hostname)) return;
 
   event.respondWith((async () => {
