@@ -29,7 +29,10 @@ export default {
 // Dev: answer /api/leetcode from the Vite server so the lookup works locally too.
 const leetcodeDev = () => ({
   name: 'leetcode-dev-proxy',
-  configureServer(server) {
+  configureServer: (server) => mount(server),
+  configurePreviewServer: (server) => mount(server),
+});
+const mount = (server) => {
     server.middlewares.use('/api/leetcode', async (req, res) => {
       const u = new URL(req.url, 'http://x').searchParams.get('u');
       const r = await lookupLeetCode(u);
@@ -37,8 +40,7 @@ const leetcodeDev = () => ({
       res.setHeader('Content-Type', 'application/json');
       res.end(await r.text());
     });
-  },
-});
+};
 
 // base './' keeps every URL relative, so the build works at a domain root or a sub-path (e.g. GitHub Pages).
 // host: true exposes the dev/preview server on your Wi-Fi so you can open it on your phone.
